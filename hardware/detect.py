@@ -686,6 +686,13 @@ def get_cpus(hw_lst):
             lscpux[item.strip(':')] = value.strip()
 
     hw_lst.append(("cpu", "physical", "number", int(lscpu["Socket(s)"])))
+
+    try:
+        value = _from_file("/sys/devices/system/cpu/smt/control")
+        hw_lst.append(("cpu", "physical", "smt", value))
+    except IOError as e:
+        pass
+
     for processor in range(int(lscpu["Socket(s)"])):
         ptag = "physical_{}".format(processor)
         try:
