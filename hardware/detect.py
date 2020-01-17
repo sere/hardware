@@ -736,7 +736,16 @@ def get_cpus(hw_lst):
             value = _from_file(("/sys/devices/system/cpu/cpufreq/"
                                 "policy{}/scaling_governor".format(cpu)))
         except IOError:
-            pass
+            try:
+                # fallback to the old interface available in kernels < 4.3;
+                # this is available as symlinks also in newer kernels so
+                # it has to be nested
+                value = _from_file(("/sys/devices/system/cpu/cpu{}/cpufreq/"
+                                    "scaling_governor".format(cpu)))
+            except IOError:
+                pass
+            else:
+                hw_lst.append(('cpu', ltag, "governor", value))
         else:
             hw_lst.append(('cpu', ltag, "governor", value))
 
