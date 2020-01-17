@@ -710,6 +710,7 @@ def get_cpus(hw_lst):
                                      ('family', 'CPU family', int),
                                      ('model', 'Model', _maybe_int),
                                      ('stepping', 'Stepping', _maybe_int),
+                                     ('architecture', 'Architecture', None),
                                      ('l1d cache', 'L1d cache', None),
                                      ('l1i cache', 'L1i cache', None),
                                      ('l2 cache', 'L2 cache', None),
