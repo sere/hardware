@@ -19,6 +19,7 @@
 
 
 import argparse
+import contextlib
 import fcntl
 import ipaddress
 import json
@@ -678,16 +679,15 @@ def get_cpus(hw_lst):
         :param lcpu: the logical core number
         :returns: the scaling governor if it exists, otherwise None
         """
-        try:
+        with contextlib.suppress(IOError):
             return _from_file(("/sys/devices/system/cpu/cpufreq/"
                                "policy{}/scaling_governor".format(lcpu)))
-        except IOError:
-            try:
-                # fallback to the old interface available in kernels < 4.3;
-                return _from_file(("/sys/devices/system/cpu/cpu{}/cpufreq/"
-                                   "scaling_governor".format(lcpu)))
-            except IOError:
-                return None
+
+        # fallback to the old interface available in kernels < 4.3;
+        with contextlib.suppress(IOError):
+            return _from_file(("/sys/devices/system/cpu/cpu{}/cpufreq/"
+                               "scaling_governor".format(lcpu)))
+        return None
 
     # Extracting lspcu information
     lscpu = {}
