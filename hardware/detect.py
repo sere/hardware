@@ -672,6 +672,23 @@ def get_cpus(hw_lst):
             pass
         return v
 
+    def _get_governor(lcpu):
+        """Return the scaling governor of a logical core.
+
+        :param lcpu: the logical core number
+        :returns: the scaling governor if it exists, otherwise None
+        """
+        try:
+            return _from_file(("/sys/devices/system/cpu/cpufreq/"
+                               "policy{}/scaling_governor".format(lcpu)))
+        except IOError:
+            try:
+                # fallback to the old interface available in kernels < 4.3;
+                return _from_file(("/sys/devices/system/cpu/cpu{}/cpufreq/"
+                                   "scaling_governor".format(lcpu)))
+            except IOError:
+                return None
+
     # Extracting lspcu information
     lscpu = {}
     output = detect_utils.output_lines('LANG=en_US.UTF-8 lscpu')
@@ -732,22 +749,10 @@ def get_cpus(hw_lst):
     # Governors could be different on logical cpus
     for cpu in range(int(lscpu['CPU(s)'])):
         ltag = "logical_{}".format(cpu)
-        try:
-            value = _from_file(("/sys/devices/system/cpu/cpufreq/"
-                                "policy{}/scaling_governor".format(cpu)))
-        except IOError:
-            try:
-                # fallback to the old interface available in kernels < 4.3;
-                # this is available as symlinks also in newer kernels so
-                # it has to be nested
-                value = _from_file(("/sys/devices/system/cpu/cpu{}/cpufreq/"
-                                    "scaling_governor".format(cpu)))
-            except IOError:
-                pass
-            else:
-                hw_lst.append(('cpu', ltag, "governor", value))
-        else:
-            hw_lst.append(('cpu', ltag, "governor", value))
+
+        governor = _get_governor(cpu)
+        if governor is not None:
+            hw_lst.append(('cpu', ltag, "governor", governor))
 
     # Extracting numa nodes
     try:
